@@ -1,0 +1,49 @@
+version: '3'
+
+services:
+  db:
+    image: mysql:5.7
+    command: --innodb-use-native-aio=0
+    container_name: db
+    restart: always
+    tty: true
+    volumes:
+      - ./mysql:/var/lib/mysql
+    environment:
+      - MYSQL_DATABASE=nodedb
+      - MYSQL_ROOT_PASSWORD=root
+    networks:
+      - appnet
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    image: gamoretti/codeeducation-nginx
+    restart: on-failure
+    container_name: nginx
+    networks:
+      - appnet
+    ports:
+      - "8080:80"
+    depends_on:
+      - node
+
+  node:
+    build:
+      context: ./node
+      dockerfile: Dockerfile
+    image: gamoretti/codeeducation-node
+    container_name: app
+    entrypoint: dockerize -wait tcp://db:3306 -timeout 20s docker-entrypoint.sh node index.js
+    tty: true
+    networks:
+      - appnet
+    volumes:
+      - ./node/app:/usr/src/app
+    depends_on:
+      - db
+
+networks:
+  appnet:
+    driver: bridge
