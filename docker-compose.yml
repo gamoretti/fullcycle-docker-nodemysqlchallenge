@@ -39,8 +39,6 @@ services:
     tty: true
     networks:
       - appnet
-    volumes:
-      - ./node/app:/usr/src/app
     depends_on:
       - db
 
